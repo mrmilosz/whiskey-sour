@@ -116,6 +116,7 @@ a {
 
 .pk3 {
 	text-align: center;
+	font-size: 0;
 	width: 50%;
 	margin: 15px auto 0;
 }
@@ -123,6 +124,7 @@ a {
 .pk3 a {
 	color: rgba(0, 0, 0, 0.5);
 	display: inline-block;
+	font-size: 14px;
 	margin: 0 0.5em;
 }
 		</style>
