@@ -1,5 +1,6 @@
 <?php
 $pk3_download_prefix = "http://worldspawn.org/maps/downloads/";
+$q3df_server_url = "http://q3df.org/serverlist#server_80";
 $pk3_file_names = array_filter(array_map(function($file_path) {
 	return basename($file_path);
 }, glob('/home/q3ds/.q3a/defrag/*.pk3')), function($file_name) {
@@ -173,12 +174,12 @@ window.addEventListener('DOMContentLoaded', function() {
 		</script>
 	</head>
 	<body>
-		<h1>Whiskey <span class="green">Sour</span> <span class="red">|</span> Mixed</h1>
+		<h1><a href="<?php echo $q3df_server_url; ?>">Whiskey <span class="green">Sour</span> <span class="red">|</span> Mixed</a></h1>
 		<h2 class="tech"><a href="defrag://<?php echo $_SERVER['SERVER_ADDR']; ?>:27960"><?php echo implode('<span class="light">.</span>', explode('.', $_SERVER['SERVER_ADDR'])); ?><span class="light">:</span>27960</a></h2>
 		<div class="info">
 			<div class="status section">
 				<span class="down entry">server is down</span>
-				<span class="up entry tech">/connect <?php echo $_SERVER['SERVER_NAME']; ?></span>
+				<span class="up entry tech"><a href="defrag://<?php echo $_SERVER['SERVER_NAME']; ?>">/connect <?php echo $_SERVER['SERVER_NAME']; ?></a></span>
 			</div>
 			<div class="performance section">
 				<span class="entry"><span class="comm field"></span></span>
