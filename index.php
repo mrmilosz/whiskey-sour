@@ -114,6 +114,59 @@ a {
 	color: rgba(0, 0, 0, 0.75);
 }
 
+.add-pk3 {
+	position: relative;
+	text-align: center;
+	margin-bottom: 3em;
+}
+
+
+.add-pk3 > * {
+	vertical-align: middle;
+}
+
+.add-pk3 .field {
+	display: inline-block;
+	position: relative;
+	text-align: center;
+	border-width: 1px;
+	border-style: solid;
+	border-color: #dddddd;
+	border-radius: 3px;
+	padding: 2px 2em 2px 2px;
+	box-shadow: 0 0 10px #eeeeee;
+}
+
+.add-pk3 .field input {
+	border: none;
+	margin: 0;
+	padding: 0;
+}
+
+.add-pk3 .field input:focus {
+	outline: none;
+}
+
+.add-pk3 .extension {
+	position: absolute;
+	top: 2px;
+	right: 2px;
+}
+
+.add-pk3 .response {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+}
+.add-pk3 .success.response {
+	color: rgba(0, 127, 0, 1);
+}
+.add-pk3 .error.response {
+	color: rgba(127, 0, 0, 1);
+}
+
+
 .pk3 {
 	text-align: center;
 	font-size: 0;
@@ -172,6 +225,35 @@ window.addEventListener('DOMContentLoaded', function() {
 	}
 
 	pollPerformance();
+
+	document.querySelector('.add-pk3').addEventListener('submit', function(event) {
+		var self = this;
+
+		Array.prototype.forEach.call(self.querySelectorAll('.response'), function(responseElement) {
+			responseElement.textContent = '';
+		});
+
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', '/script/map_download.php?pk3=' + self.querySelector('input[name="pk3"]').value, true);
+		xhr.onreadystatechange = function() {
+			if (this.readyState === 4) {
+				if (this.status === 200) {
+					var response = JSON.parse(this.responseText);
+					if (response.error) {
+						self.querySelector('.error.response').textContent = response.error;
+					}
+					else if (response.success) {
+						self.querySelector('.success.response').textContent = response.success;
+					}
+				}
+			}
+		};
+		xhr.send();
+
+		event.preventDefault && event.preventDefault();
+		event.cancelBubbling && event.cancelBubbling();	
+		return false;
+	});
 });
 		</script>
 	</head>
@@ -190,6 +272,18 @@ window.addEventListener('DOMContentLoaded', function() {
 				<span class="entry">uptime: <span class="etime field"></span></span>
 			</div>
 		</div>
+		<form class="add-pk3">
+			<span>Add maps from Worldspawn:</span>
+			<div class="field">
+				<input type="text" name="pk3" />
+				<div class="extension light">.pk3</div>
+			</div>
+			<input type="submit" value="Download" />
+			<div class="success response">
+			</div>
+			<div class="error response">
+			</div>
+		</form>
 		<div class="pk3">
 <?php foreach ($pk3_file_names as $pk3_file_name): ?>
 <?php $angle = rand() % 10 - 5; ?>
