@@ -153,7 +153,8 @@ a {
 	right: 2px;
 }
 
-.add-pk3 .response {
+.add-pk3 .response,
+.add-pk3 .status {
 	position: absolute;
 	top: 100%;
 	left: 0;
@@ -165,7 +166,9 @@ a {
 .add-pk3 .error.response {
 	color: rgba(127, 0, 0, 1);
 }
-
+.add-pk3 .status {
+	color: rgba(0, 0, 0, 0.75);
+}
 
 .pk3 {
 	text-align: center;
@@ -232,6 +235,7 @@ window.addEventListener('DOMContentLoaded', function() {
 		Array.prototype.forEach.call(self.querySelectorAll('.response'), function(responseElement) {
 			responseElement.textContent = '';
 		});
+		self.querySelector('.status').textContent = 'Reticulating splines...';
 
 		var xhr = new XMLHttpRequest();
 		xhr.open('GET', '/script/map_download.php?pk3=' + self.querySelector('input[name="pk3"]').value, true);
@@ -245,6 +249,8 @@ window.addEventListener('DOMContentLoaded', function() {
 					else if (response.success) {
 						self.querySelector('.success.response').textContent = response.success;
 					}
+					
+					self.querySelector('.status').textContent = '';
 				}
 			}
 		};
@@ -279,10 +285,9 @@ window.addEventListener('DOMContentLoaded', function() {
 				<div class="extension light">.pk3</div>
 			</div>
 			<input type="submit" value="Download" />
-			<div class="success response">
-			</div>
-			<div class="error response">
-			</div>
+			<div class="success response"></div>
+			<div class="error response"></div>
+			<div class="status"></div>
 		</form>
 		<div class="pk3">
 <?php foreach ($pk3_file_names as $pk3_file_name): ?>
