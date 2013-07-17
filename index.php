@@ -186,48 +186,80 @@ a {
 		</style>
 		<script type="text/javascript">
 window.addEventListener('DOMContentLoaded', function() {
-	var performancePollPeriod = 5000;
-	var validPropertyNames = ['pcpu', 'pmem', 'etime', 'comm'];
+	var performancePollPeriod = 30000;
+	var validPropertyNames = ['pcpu', 'pmem', 'etime', 'time', 'comm'];
+	var previousProperties = {
+		time: null,
+		etime: null
+	};
 
-	function pollPerformance() {
-		var psFormatString = Array.prototype.map.call(document.querySelectorAll('.info .performance .field'), function(spanElement) {
-			return validPropertyNames.filter(function(propertyName) {
-				return spanElement.classList.contains(propertyName);
-			})[0];
-		}).join(',');
-
-		var xhr = new XMLHttpRequest();
-		xhr.open('GET', '/script/performance.php?o=' + psFormatString, true);
-		xhr.onreadystatechange = function() {
-			if (this.readyState === 4) {
-				if (this.status === 200) {
-					var properties = JSON.parse(this.responseText),
-						serverIsOnline = false;
-
-					Array.prototype.forEach.call(document.querySelectorAll('.info .performance .field'), function(spanElement) {
-						spanElement.textContent = '';
-					});
-
-					for (propertyName in properties) {
-						var propertyValue = properties[propertyName];
-						document.querySelector('.info .performance .field.' + propertyName).textContent = propertyValue;
-						serverIsOnline = true;
-					}
-
-					if (serverIsOnline) {
-						document.querySelector('.info').classList.add('online');
-					}
-					else {
-						document.querySelector('.info').classList.remove('online');
-					}
-				}
-				setTimeout(pollPerformance, performancePollPeriod);
+	// Adds etime and time to the properties if pcpu was requested
+	function adjustOutgoingPropertyNames(outgoingPropertyNames) {
+		outgoingPropertyNames = outgoingPropertyNames.slice(0);
+		if (outgoingPropertyNames.indexOf('pcpu') > -1) {
+			if (outgoingPropertyNames.indexOf('etime') < 0) {
+				outgoingPropertyNames.push('etime');
 			}
-		};
-		xhr.send();
+			if (outgoingPropertyNames.indexOf('time') < 0) {
+				outgoingPropertyNames.push('time');
+			}
+			if (previousProperties.time !== null && previousProperties.etime !== null) {
+				outgoingPropertyNames.splice(outgoingPropertyNames.indexOf('pcpu'), 1);
+			}
+		}
+		return outgoingPropertyNames;
 	}
 
-	pollPerformance();
+	// Uses historical data on etime and time to compute a more up-to-date pcpu
+	function adjustIncomingProperties(outgoingPropertyNames, incomingProperties) {
+		var adjustedIncomingProperties = {};
+		outgoingPropertyNames.forEach(function(propertyName) {
+			if (propertyName === 'pcpu') {
+				if (previousProperties.time !== null && previousProperties.etime !== null) {
+					adjustedIncomingProperties.pcpu = (100 *
+						(parsePsTime(incomingProperties.time) - parsePsTime(previousProperties.time)) /
+						(parsePsTime(incomingProperties.etime) - parsePsTime(previousProperties.etime))
+					).toFixed(1);
+				}
+				else {
+					adjustedIncomingProperties.pcpu = incomingProperties.pcpu;
+				}
+				previousProperties.time = incomingProperties.time;
+				previousProperties.etime = incomingProperties.etime;
+			}
+			else {
+				adjustedIncomingProperties[propertyName] = incomingProperties[propertyName];
+			}
+		});
+		return adjustedIncomingProperties;
+	}
+
+	// Parses [[DD-]hh:]mm:ss or [DD-]HH:MM:SS (unix ps time formats) into seconds
+	function parsePsTime(psTime) {
+		var days = 0,
+			hours = 0,
+			minutes = 0,
+			seconds = 0;
+
+		var parts = psTime.split('-');
+
+		if (parts.length === 2) {
+			days = parseInt(parts[0]);
+		}
+
+		parts = parts[parts.length - 1].split(':');
+
+		if (parts.length >= 2) {
+			seconds = parseInt(parts[parts.length - 1]);
+			minutes = parseInt(parts[parts.length - 2]);
+		}
+
+		if (parts.length >= 3) {
+			hours = parseInt(parts[parts.length - 3]);
+		}
+
+		return days * 86400 + hours * 3600 + minutes * 60 + seconds;
+	}
 
 	document.querySelector('.add-pk3').addEventListener('submit', function(event) {
 		var self = this;
@@ -260,6 +292,46 @@ window.addEventListener('DOMContentLoaded', function() {
 		event.cancelBubbling && event.cancelBubbling();	
 		return false;
 	});
+
+	function pollPerformance() {
+		var requestedPropertyNames = Array.prototype.map.call(document.querySelectorAll('.info .performance .field'), function(spanElement) {
+			return validPropertyNames.filter(function(propertyName) {
+				return spanElement.classList.contains(propertyName);
+			})[0];
+		});
+
+		var xhr = new XMLHttpRequest();
+		xhr.open('GET', '/script/performance.php?o=' + adjustOutgoingPropertyNames(requestedPropertyNames).join(','), true);
+		xhr.onreadystatechange = function() {
+			if (this.readyState === 4) {
+				if (this.status === 200) {
+					var returnedProperties = adjustIncomingProperties(requestedPropertyNames, JSON.parse(this.responseText)),
+						serverIsOnline = false;
+
+					Array.prototype.forEach.call(document.querySelectorAll('.info .performance .field'), function(spanElement) {
+						spanElement.textContent = '';
+					});
+
+					requestedPropertyNames.forEach(function(propertyName) {
+						var propertyValue = returnedProperties[propertyName];
+						document.querySelector('.info .performance .field.' + propertyName).textContent = propertyValue;
+						serverIsOnline = true;
+					});
+
+					if (serverIsOnline) {
+						document.querySelector('.info').classList.add('online');
+					}
+					else {
+						document.querySelector('.info').classList.remove('online');
+					}
+				}
+				setTimeout(pollPerformance, performancePollPeriod);
+			}
+		};
+		xhr.send();
+	}
+
+	pollPerformance();
 });
 		</script>
 	</head>

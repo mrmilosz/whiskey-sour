@@ -1,7 +1,7 @@
 <?php
 $server_executable_regex = '/^ioq3ded/';
 $pidfile_path = '/home/q3ds/quake.pid';
-$valid_property_names = array('pcpu', 'pmem', 'etime', 'comm');
+$valid_property_names = array('pcpu', 'pmem', 'etime', 'time', 'comm');
 
 $output = array();
 
