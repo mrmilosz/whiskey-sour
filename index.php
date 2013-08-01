@@ -270,7 +270,7 @@ window.addEventListener('DOMContentLoaded', function() {
 		self.querySelector('.status').textContent = 'Reticulating splines...';
 
 		var xhr = new XMLHttpRequest();
-		xhr.open('GET', '/script/map_download.php?pk3=' + self.querySelector('input[name="pk3"]').value, true);
+		xhr.open('GET', '/script/map_download.php?pk3=' + encodeURIComponent(self.querySelector('input[name="pk3"]').value), true);
 		xhr.onreadystatechange = function() {
 			if (this.readyState === 4) {
 				if (this.status === 200) {
@@ -301,7 +301,7 @@ window.addEventListener('DOMContentLoaded', function() {
 		});
 
 		var xhr = new XMLHttpRequest();
-		xhr.open('GET', '/script/performance.php?o=' + adjustOutgoingPropertyNames(requestedPropertyNames).join(','), true);
+		xhr.open('GET', '/script/performance.php?o=' + encodeURIComponent(adjustOutgoingPropertyNames(requestedPropertyNames).join(',')), true);
 		xhr.onreadystatechange = function() {
 			if (this.readyState === 4) {
 				if (this.status === 200) {
