@@ -1,46 +1,71 @@
 <?php
-$map_source_url_format = 'http://worldspawn.org/maps/downloads/%s.pk3';
-$map_destination_path_format = '/home/q3ds/.q3a/defrag/%s.pk3';
+$map_source_url_formats = array(
+	'bsp' => 'http://worldspawn.org/getpk3bymapname.php/%s',
+	'pk3' => 'http://worldspawn.org/maps/downloads/%s.pk3'
+);
+$game_path = '/home/q3ds/.q3a/defrag/';
+$pk3_destination_path_format = '/home/q3ds/pk3/%s';
 $curl_user_agent_string = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13';
-$rcon_password = trim(file_get_contents('/home/q3ds/.rcon_password'));
-$rcon_command = "\xff\xff\xff\xffrcon \"$rcon_password\" reload_fs";
+$rcon_password_path = '/home/q3ds/.rcon_password';
+$rcon_command = 'reload_fs';
 $rcon_ip = '199.195.252.136';
 $rcon_port = 27960;
 
+$rcon_password = trim(file_get_contents($rcon_password_path));
 $output = array();
 
-# Get the name of the pk3 file to be downloaded
-$client_pk3_filename = isset($_GET['pk3']) ? $_GET['pk3'] : '';
+# Get the name of the file to be downloaded, and whether it is a pk3 or a bsp
+$client_filename = isset($_GET['name']) ? $_GET['name'] : '';
+$client_file_extension = isset($_GET['ext']) ? $_GET['ext'] : '';
 
-# Sanitize the pk3 name and check if it already exists on the system
-if (strpos($client_pk3_filename, '/') > -1) {
-	$output['error'] = "Invalid character `/' in filename.";
+# Make sure the given extension is valid, then construct the URL at which the file can be found
+if (!array_key_exists($client_file_extension, $map_source_url_formats)) {
+	$output['error'] = "Invalid file extension given: `$client_file_extension'.";
 	finish($output);
 }
-$map_destination_path = sprintf($map_destination_path_format, $client_pk3_filename);
-if (file_exists($map_destination_path)) {
-	$output['error'] = "File already exists: `$client_pk3_filename.pk3'.";
-	finish($output);
-}
+$map_source_url_format = $map_source_url_formats[$client_file_extension];
 
-# Sanitize the pk3 name and create the URL
-$map_source_url = sprintf($map_source_url_format, urlencode($client_pk3_filename));
+# Encode the filename and create the URL
+$map_source_url = sprintf($map_source_url_format, urlencode($client_filename));
 
-# Check if the pk3 exists at the source URL
+# Check if the file exists at the source URL // and get its real name (TODO)
 $map_source_head_curl = curl_init($map_source_url);
 curl_setopt($map_source_head_curl, CURLOPT_USERAGENT, $curl_user_agent_string);
+curl_setopt($map_source_head_curl, CURLOPT_HEADER, true);
+curl_setopt($map_source_head_curl, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($map_source_head_curl, CURLOPT_FOLLOWLOCATION, true);
 curl_setopt($map_source_head_curl, CURLOPT_NOBODY, true);
-curl_exec($map_source_head_curl);
+$curl_response = curl_exec($map_source_head_curl);
+$content_disposition_filename = get_content_disposition_filename($curl_response);
 $map_source_head_curl_http_code = curl_getinfo($map_source_head_curl, CURLINFO_HTTP_CODE);
 curl_close($map_source_head_curl);
 if ($map_source_head_curl_http_code !== 200) {
 	$output['error'] = "Server responded with code $map_source_head_curl_http_code for URL `$map_source_url'.";
 	finish($output);
 }
+if ($content_disposition_filename === null) {
+	$output['error'] = "Server did not give filename for URL `$map_source_url'.";
+	finish($output);
+}
+
+# Sanitize the retrieved filename and check if the file already exists on the system
+if (strpos($content_disposition_filename, '/') > -1) {
+	$output['error'] = "Invalid character `/' in filename `$content_disposition_filename'.";
+	finish($output);
+}
+$pk3_destination_path = sprintf($pk3_destination_path_format, $content_disposition_filename);
+if (file_exists($pk3_destination_path)) {
+	$output['error'] = "File already exists: `$content_disposition_filename'.";
+	finish($output);
+}
 
 # Download the pk3
-$map_destination_file = fopen($map_destination_path, 'wb');
+$map_destination_file = fopen($pk3_destination_path, 'wb');
+if ($map_destination_file === false) {
+	$output['error'] = 'Failed to open local file for download.';
+	finish($output);
+}
+
 $map_source_curl = curl_init($map_source_url);
 curl_setopt($map_source_curl, CURLOPT_USERAGENT, $curl_user_agent_string);
 curl_setopt($map_source_curl, CURLOPT_FOLLOWLOCATION, true);
@@ -50,16 +75,71 @@ curl_exec($map_source_curl);
 curl_close($map_source_curl);
 fclose($map_destination_file);
 
+# Unzip maps/* from the pk3 into Q3's maps/
+$pk3_zip = new ZipArchive;
+if ($pk3_zip->open($pk3_destination_path) === false) {
+	$output['error'] = "Failed to open archive `$content_disposition_filename'";
+	finish($output);
+}
+$pk3_zip_bsp_paths = array();
+for ($i = 0; $i < $pk3_zip->numFiles; ++$i) {
+	$pk3_zip_path = $pk3_zip->getNameIndex($i);
+	if (preg_match('/^maps\/[^\/]+$/', $pk3_zip_path)) {
+		$pk3_zip_bsp_paths[] = strtolower($pk3_zip_path);
+	}
+}
+if ($pk3_zip->extractTo($game_path, $pk3_zip_bsp_paths) === false) {
+	$output['error'] = 'Failed to open local path for extraction-to.';
+	finish($output);
+}
+$pk3_zip->close();
+
 # Reload the Q3 filesystem
 $rcon_socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
-socket_sendto($rcon_socket, $rcon_command, strlen($rcon_command), 0, $rcon_ip, $rcon_port);
+$rcon_datagram = "\xff\xff\xff\xffrcon \"$rcon_password\" $rcon_command"; 
+socket_sendto($rcon_socket, $rcon_datagram, strlen($rcon_command), 0, $rcon_ip, $rcon_port);
 socket_close($rcon_socket);
 
+# Get the filenames of the extracted bsps
+$bsp_file_names = array_map(function($file_path) {
+	return basename($file_path);
+}, $pk3_zip_bsp_paths);
+
 $output['success'] = "Successfully downloaded `$map_source_url'! Reloading filesystem.";
-$output['filename'] = "$client_pk3_filename.pk3";
+$output['filename'] = $content_disposition_filename;
+$output['contents'] = $bsp_file_names;
 finish($output);
 function finish($output) {
 	header('Content-Type: application/json');
 	echo json_encode((object) $output);
 	exit;
+}
+
+# http://stackoverflow.com/a/10590242
+function get_headers_from_curl_response($response) {
+	$headers = array();
+
+	$header_text = substr($response, 0, strpos($response, "\r\n\r\n"));
+
+	foreach (explode("\r\n", $header_text) as $i => $line) {
+		if ($i === 0) {
+			$headers['http_code'] = $line;
+		}
+		else {
+			list ($key, $value) = explode(': ', $line);
+
+			$headers[$key] = $value;
+		}
+	}
+
+	return $headers;
+}
+
+function get_content_disposition_filename($response) {
+	$headers = get_headers_from_curl_response($response);
+	if (!array_key_exists('Content-Disposition', $headers)) {
+		return null;
+	}
+	list ($_, $filename) = explode('"', $headers['Content-Disposition']);
+	return $filename;
 }

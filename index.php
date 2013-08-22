@@ -1,11 +1,9 @@
 <?php
 $pk3_download_prefix = "http://worldspawn.org/maps/downloads/";
 $q3df_server_url = "http://q3df.org/serverlist#server_80";
-$pk3_file_names = array_filter(array_map(function($file_path) {
+$pk3_file_names = array_map(function($file_path) {
 	return basename($file_path);
-}, glob('/home/q3ds/.q3a/defrag/*.pk3')), function($file_name) {
-	return !preg_match('/^z+-/', $file_name);
-});
+}, glob('/home/q3ds/pk3/*.pk3'));
 ?>
 <!DOCTYPE html>
 <html>
@@ -125,10 +123,7 @@ a {
 	vertical-align: middle;
 }
 
-.add-pk3 .field {
-	display: inline-block;
-	position: relative;
-	text-align: center;
+.add-pk3 input[type="text"] {
 	border-width: 1px;
 	border-style: solid;
 	border-color: #dddddd;
@@ -137,20 +132,8 @@ a {
 	box-shadow: 0 0 10px #eeeeee;
 }
 
-.add-pk3 .field input {
-	border: none;
-	margin: 0;
-	padding: 0;
-}
-
-.add-pk3 .field input:focus {
+.add-pk3 input[type="text"]:focus {
 	outline: none;
-}
-
-.add-pk3 .extension {
-	position: absolute;
-	top: 2px;
-	right: 2px;
 }
 
 .add-pk3 .response,
@@ -270,7 +253,9 @@ window.addEventListener('DOMContentLoaded', function() {
 		self.querySelector('.status').textContent = 'Reticulating splines...';
 
 		var xhr = new XMLHttpRequest();
-		xhr.open('GET', '/script/map_download.php?pk3=' + encodeURIComponent(self.querySelector('input[name="pk3"]').value), true);
+		xhr.open('GET', '/script/map_download.php?' + (['name', 'ext']).map(function(key) {
+			return key + '=' + encodeURIComponent(self.querySelector('.field[name="' + key + '"]').value)
+		}).join('&'), true);
 		xhr.onreadystatechange = function() {
 			if (this.readyState === 4) {
 				if (this.status === 200) {
@@ -314,8 +299,10 @@ window.addEventListener('DOMContentLoaded', function() {
 
 					requestedPropertyNames.forEach(function(propertyName) {
 						var propertyValue = returnedProperties[propertyName];
-						document.querySelector('.info .performance .field.' + propertyName).textContent = propertyValue;
-						serverIsOnline = true;
+						if (propertyValue !== undefined) {
+							document.querySelector('.info .performance .field.' + propertyName).textContent = propertyValue;
+							serverIsOnline = true;
+						}
 					});
 
 					if (serverIsOnline) {
@@ -352,10 +339,11 @@ window.addEventListener('DOMContentLoaded', function() {
 		</div>
 		<form class="add-pk3">
 			<span>Add maps from Worldspawn:</span>
-			<div class="field">
-				<input type="text" name="pk3" />
-				<div class="extension light">.pk3</div>
-			</div>
+			<input class="field" type="text" name="name" />
+			<select class="field" name="ext">
+				<option value="pk3" selected>.pk3</option>
+				<option value="bsp">.bsp</option>
+			</select>
 			<input type="submit" value="Download" />
 			<div class="success response"></div>
 			<div class="error response"></div>
