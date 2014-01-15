@@ -1,5 +1,5 @@
 <?php
-$config = parse_ini_file('server.ini');
+$config = json_decode(file_get_contents('server.json'), true);
 
 $valid_property_names = array('pcpu', 'pmem', 'etime', 'time', 'comm');
 

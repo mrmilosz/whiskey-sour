@@ -1,8 +1,6 @@
 <?php
-$map_source_url_formats = array(
-	'bsp' => 'http://worldspawn.org/getpk3bymapname.php/%s',
-	'pk3' => 'http://worldspawn.org/maps/downloads/%s.pk3'
-);
+$config = json_decode(file_get_contents('server.json'), true);
+
 $game_path = "${config['q3a_path']}${config['mod']}";
 $pk3_destination_path_format = "${config['pk3_directory']}/%s";
 $curl_user_agent_string = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13';
@@ -16,7 +14,7 @@ $client_filename = isset($_GET['name']) ? $_GET['name'] : '';
 $client_file_extension = isset($_GET['ext']) ? $_GET['ext'] : '';
 
 # Make sure the given extension is valid, then construct the URL at which the file can be found
-if (!array_key_exists($client_file_extension, $map_source_url_formats)) {
+if (!array_key_exists($client_file_extension, $config['map_source_url_formats'])) {
 	$output['error'] = "Invalid file extension given: `$client_file_extension'.";
 	finish($output);
 }

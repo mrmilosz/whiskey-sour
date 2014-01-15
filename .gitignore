@@ -4,4 +4,4 @@
 error.log
 *.bin
 records.db
-server.ini
+server.json

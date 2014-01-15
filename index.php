@@ -1,5 +1,5 @@
 <?php
-$config = parse_ini_file('server.ini');
+$config = json_decode(file_get_contents('server.json'), true);
 
 $pk3_file_names = array_map(function($file_path) {
 	return basename($file_path);
