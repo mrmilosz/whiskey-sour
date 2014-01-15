@@ -3,15 +3,12 @@ $map_source_url_formats = array(
 	'bsp' => 'http://worldspawn.org/getpk3bymapname.php/%s',
 	'pk3' => 'http://worldspawn.org/maps/downloads/%s.pk3'
 );
-$game_path = '/home/q3ds/.q3a/defrag/';
-$pk3_destination_path_format = '/home/q3ds/pk3/%s';
+$game_path = "${config['q3a_path']}${config['mod']}";
+$pk3_destination_path_format = "${config['pk3_directory']}/%s";
 $curl_user_agent_string = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13';
-$rcon_password_path = '/home/q3ds/.rcon_password';
 $rcon_command = 'reload_fs';
-$rcon_ip = '199.195.252.136';
-$rcon_port = 27960;
 
-$rcon_password = trim(file_get_contents($rcon_password_path));
+$rcon_password = trim(file_get_contents($config['rcon_password_file_path']));
 $output = array();
 
 # Get the name of the file to be downloaded, and whether it is a pk3 or a bsp
@@ -97,7 +94,7 @@ $pk3_zip->close();
 # Reload the Q3 filesystem
 $rcon_socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 $rcon_datagram = "\xff\xff\xff\xffrcon \"$rcon_password\" $rcon_command"; 
-socket_sendto($rcon_socket, $rcon_datagram, strlen($rcon_command), 0, $rcon_ip, $rcon_port);
+socket_sendto($rcon_socket, $rcon_datagram, strlen($rcon_command), 0, $_SERVER['SERVER_ADDR'], $config['quake_port']);
 socket_close($rcon_socket);
 
 # Get the filenames of the extracted bsps

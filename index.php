@@ -1,14 +1,14 @@
 <?php
-$pk3_download_prefix = "http://worldspawn.org/maps/downloads/";
-$q3df_server_url = "http://q3df.org/serverlist#server_80";
+$config = parse_ini_file('server.ini');
+
 $pk3_file_names = array_map(function($file_path) {
 	return basename($file_path);
-}, glob('/home/q3ds/pk3/*.pk3'));
+}, glob("${config['pk3_directory']}/*.pk3"));
 ?>
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>Whiskey Sour</title>
+		<title><?php echo $config['title']; ?></title>
 		<meta charset="utf-8" />
 		<style type="text/css">
 html,
@@ -19,7 +19,7 @@ body {
 
 html {
 	background-color: rgba(255, 255, 255, 1);
-	background-image: url('/static/whiskey_sour.jpg');
+	background-image: url('<?php echo $config['background_image_url']; ?>');
 	background-position: top center;
 	background-repeat: no-repeat;
 	font-family: "Arial",sans-serif;
@@ -323,8 +323,8 @@ window.addEventListener('DOMContentLoaded', function() {
 		</script>
 	</head>
 	<body>
-		<h1><a href="<?php echo $q3df_server_url; ?>">Whiskey <span class="green">Sour</span> <span class="red">|</span> Mixed</a></h1>
-		<h2 class="tech"><a href="defrag://<?php echo $_SERVER['SERVER_ADDR']; ?>:27960"><?php echo implode('<span class="light">.</span>', explode('.', $_SERVER['SERVER_ADDR'])); ?><span class="light">:</span>27960</a></h2>
+		<h1><a href="<?php echo $config['q3df_server_url']; ?>"><?php echo $config['heading']; ?></a></h1>
+		<h2 class="tech"><a href="defrag://<?php echo $_SERVER['SERVER_ADDR']; ?>:<?php echo $config['quake_port']; ?>}"><?php echo implode('<span class="light">.</span>', explode('.', $_SERVER['SERVER_ADDR'])); ?><span class="light">:</span>27960</a></h2>
 		<div class="info">
 			<div class="status section">
 				<span class="down entry">server is down</span>
@@ -338,7 +338,7 @@ window.addEventListener('DOMContentLoaded', function() {
 			</div>
 		</div>
 		<form class="add-pk3">
-			<span>Add maps from Worldspawn:</span>
+			<span>Add maps from <?php echo $config['pk3_download_source_name']; ?>:</span>
 			<input class="field" type="text" name="name" />
 			<select class="field" name="ext">
 				<option value="pk3" selected>.pk3</option>
@@ -352,7 +352,7 @@ window.addEventListener('DOMContentLoaded', function() {
 		<div class="pk3">
 <?php foreach ($pk3_file_names as $pk3_file_name): ?>
 <?php $angle = rand() % 10 - 5; ?>
-			<a href="<?php echo "$pk3_download_prefix$pk3_file_name"; ?>" style="transform: rotate(<?php echo $angle; ?>deg); -webkit-transform: rotate(<?php echo $angle; ?>deg);"><?php echo $pk3_file_name; ?></a>
+			<a href="<?php echo "${config['pk3_download_url_prefix']}$pk3_file_name"; ?>" style="transform: rotate(<?php echo $angle; ?>deg); -webkit-transform: rotate(<?php echo $angle; ?>deg);"><?php echo $pk3_file_name; ?></a>
 <?php endforeach; ?>
 		</div>
 	</body>

@@ -3,3 +3,5 @@
 .*.swo
 error.log
 *.bin
+records.db
+server.ini

@@ -1,6 +1,6 @@
 <?php
-$server_executable_regex = '/^ioq3ded/';
-$pidfile_path = '/home/q3ds/quake.pid';
+$config = parse_ini_file('server.ini');
+
 $valid_property_names = array('pcpu', 'pmem', 'etime', 'time', 'comm');
 
 $output = array();
@@ -20,7 +20,7 @@ $ps_property_names = array_unique(array_merge($requested_property_names, array('
 $ps_format_string = implode(',', $ps_property_names);
 
 # Build a shell command that gets information about the quake server process
-$shell_command = "ps -p `cat $pidfile_path` -o $ps_format_string";
+$shell_command = "ps -p `cat ${config['pidfile_path']}` -o $ps_format_string";
 
 # Capture output (exec gives the last line)
 $command_output = exec($shell_command);
@@ -36,7 +36,7 @@ if ($command_output[0] !== '%') {
 	$ps_property_values = array_combine($ps_property_names, $property_values);
 
 	# Make sure the monitored process is actually quake!
-	if (preg_match($server_executable_regex, $ps_property_values['comm'])) {
+	if (preg_match($config['quake_executable_regex'], $ps_property_values['comm'])) {
 		# Add the requested values to the output by key
 		foreach ($requested_property_names as $property_name) {
 			$output[$property_name] = $ps_property_values[$property_name];
