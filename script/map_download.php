@@ -1,5 +1,5 @@
 <?php
-$config = json_decode(file_get_contents('server.json'), true);
+$config = json_decode(file_get_contents('../server.json'), true);
 
 $game_path = "${config['q3a_path']}${config['mod']}";
 $pk3_destination_path_format = "${config['pk3_directory']}/%s";
@@ -18,7 +18,7 @@ if (!array_key_exists($client_file_extension, $config['map_source_url_formats'])
 	$output['error'] = "Invalid file extension given: `$client_file_extension'.";
 	finish($output);
 }
-$map_source_url_format = $map_source_url_formats[$client_file_extension];
+$map_source_url_format = $config['map_source_url_formats'][$client_file_extension];
 
 # Encode the filename and create the URL
 $map_source_url = sprintf($map_source_url_format, urlencode($client_filename));
@@ -70,6 +70,7 @@ curl_exec($map_source_curl);
 curl_close($map_source_curl);
 fclose($map_destination_file);
 
+
 # Unzip maps/* from the pk3 into Q3's maps/
 $pk3_zip = new ZipArchive;
 if ($pk3_zip->open($pk3_destination_path) === false) {
@@ -80,14 +81,18 @@ $pk3_zip_bsp_paths = array();
 for ($i = 0; $i < $pk3_zip->numFiles; ++$i) {
 	$pk3_zip_path = $pk3_zip->getNameIndex($i);
 	if (preg_match('/^maps\/[^\/]+$/', $pk3_zip_path)) {
-		$pk3_zip_bsp_paths[] = strtolower($pk3_zip_path);
+		$pk3_zip_bsp_paths[] = $pk3_zip_path;
 	}
 }
-if ($pk3_zip->extractTo($game_path, $pk3_zip_bsp_paths) === false) {
-	$output['error'] = 'Failed to open local path for extraction-to.';
+$pk3_zip_extraction_result = $pk3_zip->extractTo($game_path, $pk3_zip_bsp_paths);
+$pk3_zip->close();
+if ($pk3_zip_extraction_result === false) {
+	$output['error'] = 'Error extracting archive.';
 	finish($output);
 }
-$pk3_zip->close();
+foreach ($pk3_zip_bsp_paths as $pk3_zip_bsp_path) {
+	rename("$game_path$pk3_zip_bsp_path", "$game_path" . strtolower($pk3_zip_bsp_path));
+}
 
 # Reload the Q3 filesystem
 $rcon_socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);

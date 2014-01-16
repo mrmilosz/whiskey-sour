@@ -1,0 +1,24 @@
+{
+  "pk3_download_url_prefix": "http://worldspawn.org/maps/downloads/",
+  "pk3_download_source_name": "Worldspawn",
+  "pk3_download_source_homepage_url": "http://worldspawn.org",
+  "q3df_server_url": "http://q3df.org/serverlist#server_80",
+
+  "q3a_path": "/home/bartender/.q3a/",
+  "mod": "defrag",
+  "pidfile_path": "/home/bartender/quake.pid",
+  "pk3_directory": "/home/bartender/pk3",
+  "rcon_password_file_path": "/home/bartender/.rcon_password",
+  "map_source_url_formats": {
+    "bsp": "http://worldspawn.org/getpk3bymapname.php/%s",
+    "pk3": "http://worldspawn.org/maps/downloads/%s.pk3"
+  },
+
+  "background_image_url": "/static/whiskey_sour.jpg",
+
+  "title": "Whiskey Sour",
+  "heading": "Whiskey <span class=\"green\">Sour</span> <span class=\"red\">|</span> Mixed",
+
+  "quake_executable_regex": "/^ioq3ded/",
+  "quake_port": 27960
+}

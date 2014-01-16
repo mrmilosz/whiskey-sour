@@ -338,7 +338,7 @@ window.addEventListener('DOMContentLoaded', function() {
 			</div>
 		</div>
 		<form class="add-pk3">
-			<span>Add maps from <?php echo $config['pk3_download_source_name']; ?>:</span>
+			<span>Add maps from <a href="<?php echo $config['pk3_download_source_homepage_url']; ?>"><?php echo $config['pk3_download_source_name']; ?></a>:</span>
 			<input class="field" type="text" name="name" />
 			<select class="field" name="ext">
 				<option value="pk3" selected>.pk3</option>
