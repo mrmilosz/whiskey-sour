@@ -324,7 +324,7 @@ window.addEventListener('DOMContentLoaded', function() {
 	</head>
 	<body>
 		<h1><a href="<?php echo $config['q3df_server_url']; ?>"><?php echo $config['heading']; ?></a></h1>
-		<h2 class="tech"><a href="defrag://<?php echo $_SERVER['SERVER_ADDR']; ?>:<?php echo $config['quake_port']; ?>}"><?php echo implode('<span class="light">.</span>', explode('.', $_SERVER['SERVER_ADDR'])); ?><span class="light">:</span>27960</a></h2>
+		<h2 class="tech"><a href="defrag://<?php echo $_SERVER['SERVER_ADDR']; ?>:<?php echo $config['quake_port']; ?>"><?php echo implode('<span class="light">.</span>', explode('.', $_SERVER['SERVER_ADDR'])); ?><span class="light">:</span>27960</a></h2>
 		<div class="info">
 			<div class="status section">
 				<span class="down entry">server is down</span>
