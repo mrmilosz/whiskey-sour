@@ -97,7 +97,7 @@ foreach ($pk3_zip_bsp_paths as $pk3_zip_bsp_path) {
 # Reload the Q3 filesystem
 $rcon_socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 $rcon_datagram = "\xff\xff\xff\xffrcon \"$rcon_password\" $rcon_command"; 
-socket_sendto($rcon_socket, $rcon_datagram, strlen($rcon_command), 0, $_SERVER['SERVER_ADDR'], $config['quake_port']);
+socket_sendto($rcon_socket, $rcon_datagram, strlen($rcon_datagram), 0, $_SERVER['SERVER_ADDR'], $config['quake_port']);
 socket_close($rcon_socket);
 
 # Get the filenames of the extracted bsps
