@@ -20,5 +20,6 @@
   "heading": "Whiskey <span class=\"green\">Sour</span> <span class=\"red\">|</span> Mixed",
 
   "quake_executable_regex": "/^ioq3ded/",
-  "quake_port": 27960
+  "quake_port": 27960,
+  "quake_idle_cfg": "cfgs/idle.cfg"
 }
