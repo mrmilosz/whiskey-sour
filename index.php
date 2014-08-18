@@ -112,11 +112,6 @@ a {
 	color: rgba(0, 0, 0, 0.75);
 }
 
-.unfuck-server {
-	font-weight: bold;
-	text-align: center;
-}
-
 .add-pk3 {
 	position: relative;
 	text-align: center;
@@ -248,39 +243,6 @@ window.addEventListener('DOMContentLoaded', function() {
 		return days * 86400 + hours * 3600 + minutes * 60 + seconds;
 	}
 
-	// This is a bit hacked-in... refactor later
-	document.querySelector('.unfuck-server').addEventListener('submit', function(event) {
-		var self = this;
-
-		Array.prototype.forEach.call(document.querySelectorAll('.add-pk3 .response'), function(responseElement) {
-			responseElement.textContent = '';
-		});
-		document.querySelector('.add-pk3 .status').textContent = 'Attempting to unfuck…'
-
-		var xhr = new XMLHttpRequest();
-		xhr.open('GET', '/script/unfuck_server.php', true);
-		xhr.onreadystatechange = function() {
-			if (this.readyState === 4) {
-				if (this.status === 200) {
-					var response = JSON.parse(this.responseText);
-					if (response.error) {
-						document.querySelector('.add-pk3 .error.response').textContent = response.error;
-					}
-					else if (response.success) {
-						document.querySelector('.add-pk3 .success.response').textContent = response.success;
-					}
-					
-					document.querySelector('.add-pk3 .status').textContent = '';
-				}
-			}
-		};
-		xhr.send();
-
-		event.preventDefault && event.preventDefault();
-		event.cancelBubbling && event.cancelBubbling();	
-		return false;
-	});
-
 	document.querySelector('.add-pk3').addEventListener('submit', function(event) {
 		var self = this;
 
@@ -374,10 +336,6 @@ window.addEventListener('DOMContentLoaded', function() {
 				<span class="entry">uptime: <span class="etime field"></span></span>
 			</div>
 		</div>
-		<form class="unfuck-server">
-			Server claims to be online, but isn't?
-			<input type="submit" value="Unfuck" />
-		</form>
 		<form class="add-pk3">
 			<span>Add maps from <a href="<?php echo $config['pk3_download_source_homepage_url']; ?>"><?php echo $config['pk3_download_source_name']; ?></a>:</span>
 			<input class="field" type="text" name="name" />
