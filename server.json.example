@@ -1,7 +1,7 @@
 {
-  "pk3_download_url_prefix": "http://worldspawn.org/maps/downloads/",
+  "pk3_download_url_prefix": "http://ws.q3df.org/maps/downloads/",
   "pk3_download_source_name": "Worldspawn",
-  "pk3_download_source_homepage_url": "http://worldspawn.org",
+  "pk3_download_source_homepage_url": "http://ws.q3df.org",
   "q3df_server_url": "http://q3df.org/serverlist#server_80",
 
   "q3a_path": "/home/bartender/.q3a/",
@@ -10,8 +10,8 @@
   "pk3_directory": "/home/bartender/pk3",
   "rcon_password_file_path": "/home/bartender/.rcon_password",
   "map_source_url_formats": {
-    "bsp": "http://worldspawn.org/getpk3bymapname.php/%s",
-    "pk3": "http://worldspawn.org/maps/downloads/%s.pk3"
+    "bsp": "http://ws.q3df.org/getpk3bymapname.php/%s",
+    "pk3": "http://ws.q3df.org/maps/downloads/%s.pk3"
   },
 
   "background_image_url": "/static/whiskey_sour.jpg",
