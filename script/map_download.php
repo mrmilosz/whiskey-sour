@@ -15,7 +15,7 @@ $client_file_extension = isset($_GET['ext']) ? $_GET['ext'] : '';
 
 # Make sure the given extension is valid, then construct the URL at which the file can be found
 if (!array_key_exists($client_file_extension, $config['map_source_url_formats'])) {
-	$output['error'] = "Invalid file extension given: `$client_file_extension'.";
+	set_error("Invalid file extension given: `$client_file_extension'.");
 	finish($output);
 }
 $map_source_url_format = $config['map_source_url_formats'][$client_file_extension];
@@ -23,7 +23,7 @@ $map_source_url_format = $config['map_source_url_formats'][$client_file_extensio
 # Encode the filename and create the URL
 $map_source_url = sprintf($map_source_url_format, urlencode($client_filename));
 
-# Check if the file exists at the source URL // and get its real name (TODO)
+# Check if the file exists at the source URL
 $map_source_head_curl = curl_init($map_source_url);
 curl_setopt($map_source_head_curl, CURLOPT_USERAGENT, $curl_user_agent_string);
 curl_setopt($map_source_head_curl, CURLOPT_HEADER, true);
@@ -35,29 +35,29 @@ $content_disposition_filename = get_content_disposition_filename($curl_response)
 $map_source_head_curl_http_code = curl_getinfo($map_source_head_curl, CURLINFO_HTTP_CODE);
 curl_close($map_source_head_curl);
 if ($map_source_head_curl_http_code !== 200) {
-	$output['error'] = "Server responded with code $map_source_head_curl_http_code for URL `$map_source_url'.";
+	set_error($output, "Server responded with code $map_source_head_curl_http_code for URL `$map_source_url'.");
 	finish($output);
 }
 if ($content_disposition_filename === null) {
-	$output['error'] = "Server did not give filename for URL `$map_source_url'.";
+	set_error($output, "Server did not give filename for URL `$map_source_url'.");
 	finish($output);
 }
 
 # Sanitize the retrieved filename and check if the file already exists on the system
 if (strpos($content_disposition_filename, '/') > -1) {
-	$output['error'] = "Invalid character `/' in filename `$content_disposition_filename'.";
+	set_error($output, "Invalid character `/' in filename `$content_disposition_filename'.");
 	finish($output);
 }
 $pk3_destination_path = sprintf($pk3_destination_path_format, $content_disposition_filename);
 if (file_exists($pk3_destination_path)) {
-	$output['error'] = "File already exists: `$content_disposition_filename'.";
+	set_error($output, "File already exists: `$content_disposition_filename'.");
 	finish($output);
 }
 
 # Download the pk3
 $map_destination_file = fopen($pk3_destination_path, 'wb');
 if ($map_destination_file === false) {
-	$output['error'] = 'Failed to open local file for download.';
+	set_error($output, 'Failed to open local file for download.');
 	finish($output);
 }
 
@@ -74,7 +74,7 @@ fclose($map_destination_file);
 # Unzip maps/* from the pk3 into Q3's maps/
 $pk3_zip = new ZipArchive;
 if ($pk3_zip->open($pk3_destination_path) === false) {
-	$output['error'] = "Failed to open archive `$content_disposition_filename'";
+	set_error($output, "Failed to open archive `$content_disposition_filename'");
 	finish($output);
 }
 $pk3_zip_bsp_paths = array();
@@ -87,7 +87,7 @@ for ($i = 0; $i < $pk3_zip->numFiles; ++$i) {
 $pk3_zip_extraction_result = $pk3_zip->extractTo($game_path, $pk3_zip_bsp_paths);
 $pk3_zip->close();
 if ($pk3_zip_extraction_result === false) {
-	$output['error'] = 'Error extracting archive.';
+	set_error($output, 'Error extracting archive.');
 	finish($output);
 }
 foreach ($pk3_zip_bsp_paths as $pk3_zip_bsp_path) {
@@ -142,4 +142,9 @@ function get_content_disposition_filename($response) {
 	}
 	list ($_, $filename) = explode('"', $headers['Content-Disposition']);
 	return $filename;
+}
+
+function set_error(&$output, $message) {
+	$output['error'] = $message;
+	error_log("(application) $message");
 }

@@ -2,6 +2,7 @@
 .*.swp
 .*.swo
 error.log
+application.log
 *.bin
 records.db
 server.json
