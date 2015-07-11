@@ -15,7 +15,7 @@ $client_file_extension = isset($_GET['ext']) ? $_GET['ext'] : '';
 
 # Make sure the given extension is valid, then construct the URL at which the file can be found
 if (!array_key_exists($client_file_extension, $config['map_source_url_formats'])) {
-	set_error("Invalid file extension given: `$client_file_extension'.");
+	set_error($output, "Invalid file extension given: `$client_file_extension'.");
 	finish($output);
 }
 $map_source_url_format = $config['map_source_url_formats'][$client_file_extension];
