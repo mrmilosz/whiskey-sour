@@ -326,7 +326,7 @@ window.addEventListener('DOMContentLoaded', function() {
 		<h2 class="tech"><a href="defrag://<?php echo $_SERVER['SERVER_ADDR']; ?>:<?php echo $config['quake_port']; ?>"><?php echo implode('<span class="light">.</span>', explode('.', $_SERVER['SERVER_ADDR'])); ?><span class="light">:</span>27960</a></h2>
 		<div class="info">
 			<div class="status section">
-				<span class="down entry">server is down</span>
+				<span class="down entry">server status unknown</span>
 				<span class="up entry tech"><a href="defrag://<?php echo $_SERVER['SERVER_NAME']; ?>">/connect <?php echo $_SERVER['SERVER_NAME']; ?></a></span>
 			</div>
 			<div class="performance section">
