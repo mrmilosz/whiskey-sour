@@ -2,9 +2,9 @@
 $config = json_decode(file_get_contents('../server.json'), true);
 
 $game_path = "${config['q3a_path']}${config['mod']}/";
-$pk3_destination_path_format = "${config['pk3_directory']}/%s";
 $curl_user_agent_string = 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13';
 $rcon_command = 'reload_fs';
+$db_path = '../records.db';
 
 $rcon_password = trim(file_get_contents($config['rcon_password_file_path']));
 $output = array();
@@ -43,24 +43,43 @@ if ($content_disposition_filename === null) {
 	finish($output);
 }
 
-# Sanitize the retrieved filename and check if the file already exists on the system
+# Sanitize the retrieved filename
 if (strpos($content_disposition_filename, '/') > -1) {
 	set_error($output, "Invalid character `/' in filename `$content_disposition_filename'.");
 	finish($output);
 }
-$pk3_destination_path = sprintf($pk3_destination_path_format, $content_disposition_filename);
-if (file_exists($pk3_destination_path)) {
-	set_error($output, "File already exists: `$content_disposition_filename'.");
+
+# Establish a connection to the pk3 name database
+$database = new SQLite3($db_path);
+if (!$database) {
+	set_error($output, "Failed to fetch list of downloaded pk3s.");
+	finish($output);
+}
+$statement = $database->prepare('SELECT name FROM pack WHERE name=:name');
+if (!$statement) {
+	set_error($output, "Failed to fetch list of downloaded pk3s.");
+	finish($output);
+}
+
+# Check if the pk3 is already in the pk3 name database
+$pk3_name = basename($content_disposition_filename, '.pk3');
+$statement->bindValue(':name', $pk3_name);
+$result = $statement->execute();
+$pk3_exists = !!$result->fetchArray();
+$result->finalize();
+$statement->close();
+if ($pk3_exists) {
+	set_error($output, "`$content_disposition_filename' already downloaded.");
 	finish($output);
 }
 
 # Download the pk3
+$pk3_destination_path = tempnam(sys_get_temp_dir(), $content_disposition_filename);
 $map_destination_file = fopen($pk3_destination_path, 'wb');
 if ($map_destination_file === false) {
 	set_error($output, 'Failed to open local file for download.');
 	finish($output);
 }
-
 $map_source_curl = curl_init($map_source_url);
 curl_setopt($map_source_curl, CURLOPT_USERAGENT, $curl_user_agent_string);
 curl_setopt($map_source_curl, CURLOPT_FOLLOWLOCATION, true);
@@ -70,13 +89,14 @@ curl_exec($map_source_curl);
 curl_close($map_source_curl);
 fclose($map_destination_file);
 
-
-# Unzip maps/* from the pk3 into Q3's maps/
+# Open the pk3 (it is a zip file)
 $pk3_zip = new ZipArchive;
 if ($pk3_zip->open($pk3_destination_path) === false) {
 	set_error($output, "Failed to open archive `$content_disposition_filename'");
 	finish($output);
 }
+
+# Unzip maps/* from the pk3 into Q3's maps/ and delete the original pk3
 $pk3_zip_bsp_paths = array();
 for ($i = 0; $i < $pk3_zip->numFiles; ++$i) {
 	$pk3_zip_path = $pk3_zip->getNameIndex($i);
@@ -86,6 +106,9 @@ for ($i = 0; $i < $pk3_zip->numFiles; ++$i) {
 }
 $pk3_zip_extraction_result = $pk3_zip->extractTo($game_path, $pk3_zip_bsp_paths);
 $pk3_zip->close();
+if (file_exists($pk3_destination_path)) {
+	unlink ($pk3_destination_path);
+}
 if ($pk3_zip_extraction_result === false) {
 	set_error($output, 'Error extracting archive.');
 	finish($output);
@@ -93,6 +116,17 @@ if ($pk3_zip_extraction_result === false) {
 foreach ($pk3_zip_bsp_paths as $pk3_zip_bsp_path) {
 	rename("$game_path$pk3_zip_bsp_path", "$game_path" . strtolower($pk3_zip_bsp_path));
 }
+
+# Record the downloaded pk3's name in the pk3 name database
+$statement = $database->prepare('INSERT INTO pack (name) VALUES(:name)');
+if (!$statement) {
+	set_error($output, "Failed to update list of downloaded pk3s.");
+	finish($output);
+}
+$statement->bindValue(':name', $pk3_name);
+$result = $statement->execute();
+$result->finalize();
+$statement->close();
 
 # Reload the Q3 filesystem
 $rcon_socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);

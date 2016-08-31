@@ -1,9 +1,17 @@
 <?php
 $config = json_decode(file_get_contents('server.json'), true);
+$db_path = 'records.db';
 
-$pk3_file_names = array_map(function($file_path) {
-	return basename($file_path);
-}, glob("${config['pk3_directory']}/*.pk3"));
+# Establish a connection to the pk3 name database
+$database = new SQLite3($db_path);
+$statement = $database->prepare('SELECT name FROM pack ORDER BY name');
+$result = $statement->execute();
+$pk3_file_names = array();
+while ($row = $result->fetchArray()) {
+	$pk3_file_names []= "${row['name']}.pk3";
+}
+$result->finalize();
+$statement->close();
 ?>
 <!DOCTYPE html>
 <html>

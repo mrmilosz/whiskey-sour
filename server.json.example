@@ -7,7 +7,6 @@
   "q3a_path": "/home/bartender/.q3a/",
   "mod": "defrag",
   "pidfile_path": "/home/bartender/quake.pid",
-  "pk3_directory": "/home/bartender/pk3",
   "rcon_password_file_path": "/home/bartender/.rcon_password",
   "map_source_url_formats": {
     "bsp": "http://ws.q3df.org/getpk3bymapname.php/%s",
