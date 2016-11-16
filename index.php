@@ -359,7 +359,7 @@ window.addEventListener('DOMContentLoaded', function() {
 		<div class="pk3">
 <?php foreach ($pk3_file_names as $pk3_file_name): ?>
 <?php $angle = rand() % 10 - 5; ?>
-			<a href="<?php echo "${config['pk3_download_url_prefix']}$pk3_file_name"; ?>" style="transform: rotate(<?php echo $angle; ?>deg); -webkit-transform: rotate(<?php echo $angle; ?>deg);"><?php echo $pk3_file_name; ?></a>
+			<a href="<?php echo $config['pk3_download_url_prefix'].urlencode($pk3_file_name); ?>" style="transform: rotate(<?php echo $angle; ?>deg); -webkit-transform: rotate(<?php echo $angle; ?>deg);"><?php echo htmlspecialchars($pk3_file_name); ?></a>
 <?php endforeach; ?>
 		</div>
 	</body>
